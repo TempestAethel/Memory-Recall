@@ -39,17 +39,34 @@
         button:hover {
             background-color: #555;
         }
-        .toast {
-            background-color: #333;
-            color: #e0e0e0;
-            padding: 15px;
-            border-radius: 5px;
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            max-width: 300px;
+        /* Modal styles */
+        #items-modal {
             display: none;
-            opacity: 0.9;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            justify-content: center;
+            align-items: center;
+        }
+        #items-modal-content {
+            background-color: #1f1f1f;
+            padding: 20px;
+            border-radius: 10px;
+            width: 80%;
+            max-width: 600px;
+            color: #e0e0e0;
+        }
+        #items-modal-content ul {
+            list-style-type: none;
+            padding: 0;
+            text-align: left;
+        }
+        #items-modal-content ul li {
+            margin-bottom: 5px;
         }
         #game-area {
             display: none;
@@ -84,12 +101,18 @@
     </div>
 
     <div id="game-area">
-        <div id="toast" class="toast"></div>
-
         <input type="text" id="guess-input" placeholder="Enter your guesses" autocomplete="off">
         <button id="reset-btn">Reset Game</button>
 
         <div class="correct-items" id="correct-items"></div>
+    </div>
+
+    <!-- Modal for showing the items -->
+    <div id="items-modal">
+        <div id="items-modal-content">
+            <h2>Memorize these items:</h2>
+            <ul id="items-list"></ul>
+        </div>
     </div>
 
     <script>
@@ -113,26 +136,18 @@
 
         const startBtn = document.getElementById('start-btn');
         const resetBtn = document.getElementById('reset-btn');
-        const toast = document.getElementById('toast');
         const gameArea = document.getElementById('game-area');
         const guessInput = document.getElementById('guess-input');
         const correctItemsContainer = document.getElementById('correct-items');
         const numItemsInput = document.getElementById('num-items');
         const limitGuessesCheckbox = document.getElementById('limit-guesses');
+        const itemsModal = document.getElementById('items-modal');
+        const itemsListElement = document.getElementById('items-list');
 
         let correctItems = [];
         let shownItems = [];
         let wrongGuesses = 0;
         let maxWrongGuesses = 0;
-        let gameTimeout;
-
-        function showToast(message, duration = 3000) {
-            toast.innerText = message;
-            toast.style.display = 'block';
-            setTimeout(() => {
-                toast.style.display = 'none';
-            }, duration);
-        }
 
         function resetGame() {
             correctItems = [];
@@ -142,7 +157,7 @@
             gameArea.style.display = 'none';
             numItemsInput.value = 10;
             limitGuessesCheckbox.checked = false;
-            clearTimeout(gameTimeout);
+            itemsModal.style.display = 'none';
         }
 
         function startGame() {
@@ -160,12 +175,20 @@
                 }
             }
 
-            // Show the items in a toast
-            showToast(`Memorize these items: ${shownItems.join(', ')}`, 60000); // Show items for 1 minute
+            // Show items in the modal
+            itemsListElement.innerHTML = '';
+            shownItems.forEach(item => {
+                const li = document.createElement('li');
+                li.textContent = item;
+                itemsListElement.appendChild(li);
+            });
 
-            // Hide the items after 1 minute and start the guessing phase
+            // Display the modal
+            itemsModal.style.display = 'flex';
+
+            // Close the modal after 1 minute and start the guessing phase
             setTimeout(() => {
-                toast.style.display = 'none';
+                itemsModal.style.display = 'none';
                 guessInput.value = '';
                 guessInput.focus();
                 gameArea.style.display = 'block';
@@ -196,7 +219,7 @@
         }
 
         function endGame(win) {
-            showToast(win ? 'Congratulations, You Won!' : 'Game Over, You Lost!');
+            alert(win ? 'Congratulations, You Won!' : 'Game Over, You Lost!');
             gameArea.style.display = 'none';
         }
 
