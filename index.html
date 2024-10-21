@@ -46,12 +46,14 @@
         .toast {
             background-color: #333;
             color: #e0e0e0;
-            padding: 10px;
+            padding: 15px;
             border-radius: 5px;
             position: fixed;
             bottom: 20px;
             right: 20px;
+            max-width: 300px;
             display: none;
+            opacity: 0.9;
         }
         #game-area {
             display: none;
@@ -102,6 +104,24 @@
     </div>
 
     <script>
+        const itemsList = [
+            "Toothbrush", "Toothpaste", "Soap", "Shampoo", "Conditioner", "Towel", "Toilet paper", "Razor", 
+            "Deodorant", "Lotion", "Hairbrush", "Comb", "Nail clippers", "Cotton swabs", "Cotton balls", 
+            "Face wash", "Sunscreen", "Lip balm", "Mouthwash", "Perfume", "Shampoo", "Dish soap", 
+            "Sponges", "Paper towels", "Trash bags", "Laundry detergent", "Fabric softener", "Iron", 
+            "Ironing board", "Vacuum cleaner", "Broom", "Dustpan", "Mop", "Bucket", "Cleaning spray", 
+            "Spatula", "Cutting board", "Knife", "Pot", "Pan", "Oven mitts", "Measuring cups", 
+            "Measuring spoons", "Whisk", "Can opener", "Peeler", "Colander", "Mixing bowl", 
+            "Food storage containers", "Aluminum foil", "Plastic wrap", "Baking sheets", "Coffee maker", 
+            "Coffee filters", "Teapot", "Kettle", "Blender", "Microwave", "Toaster", "Cutting knife", 
+            "Grater", "Tupperware", "Ice cube tray", "Water bottle", "Lunchbox", "Thermos", "Scissors", 
+            "Tape", "Glue", "Notebooks", "Pens", "Pencils", "Highlighters", "Sticky notes", "Stapler", 
+            "Paper clips", "Rubber bands", "Calendar", "Phone charger", "Headphones", "Laptop", 
+            "Tablet", "Remote control", "Light bulbs", "Extension cord", "First aid kit", "Flashlight", 
+            "Batteries", "Umbrella", "Sunglasses", "Wallet", "Keys", "Backpack", "Watering can", 
+            "Plant pots", "Garden gloves", "Bicycle pump", "Sports equipment", "Board games", "Books"
+        ];
+
         const startBtn = document.getElementById('start-btn');
         const resetBtn = document.getElementById('reset-btn');
         const toast = document.getElementById('toast');
@@ -120,12 +140,12 @@
         let maxWrongGuesses = 5;
         let gameTimeout;
 
-        function showToast(message) {
+        function showToast(message, duration = 3000) {
             toast.innerText = message;
             toast.style.display = 'block';
             setTimeout(() => {
                 toast.style.display = 'none';
-            }, 2000);
+            }, duration);
         }
 
         function resetGame() {
@@ -148,11 +168,17 @@
             const guessTime = parseInt(guessTimeInput.value) * 1000;
             maxWrongGuesses = infiniteGuessesCheckbox.checked ? Infinity : parseInt(wrongGuessesInput.value);
 
-            // Generate random items
-            shownItems = Array.from({ length: numItems }, () => Math.random().toString(36).substring(2, 7).toLowerCase());
+            // Generate random items from the provided list
+            shownItems = [];
+            while (shownItems.length < numItems) {
+                const randomItem = itemsList[Math.floor(Math.random() * itemsList.length)].toLowerCase();
+                if (!shownItems.includes(randomItem)) {
+                    shownItems.push(randomItem);
+                }
+            }
 
-            // Show the items as a toast
-            showToast(`Memorize these items: ${shownItems.join(', ')}`);
+            // Show the items in a toast
+            showToast(`Memorize these items: ${shownItems.join(', ')}`, showTime);
 
             // Hide the items after showTime and start the guessing phase
             setTimeout(() => {
