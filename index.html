@@ -24,7 +24,7 @@
             display: block;
             margin-bottom: 10px;
         }
-        select, input {
+        input, button {
             background-color: #1f1f1f;
             color: #e0e0e0;
             border: 1px solid #333;
@@ -33,12 +33,8 @@
             width: 100%;
         }
         button {
-            background-color: #333;
-            color: #e0e0e0;
-            border: none;
             padding: 10px;
             cursor: pointer;
-            width: 100%;
         }
         button:hover {
             background-color: #555;
@@ -81,15 +77,8 @@
         <label for="num-items">Number of items (10 to 100):</label>
         <input type="number" id="num-items" min="10" max="100" value="10">
 
-        <label for="show-time">Time to show items (30s to 5min):</label>
-        <input type="number" id="show-time" min="30" max="300" value="30"> seconds
-
-        <label for="guess-time">Time to guess (1min to 30min):</label>
-        <input type="number" id="guess-time" min="60" max="1800" value="60"> seconds
-
-        <label for="wrong-guesses">Number of wrong guesses (5 to 30 or infinite):</label>
-        <input type="number" id="wrong-guesses" min="5" max="30" value="5">
-        <input type="checkbox" id="infinite-guesses"> No limit
+        <label for="limit-guesses">Limit wrong guesses to 20% of items:</label>
+        <input type="checkbox" id="limit-guesses">
 
         <button id="start-btn">Start Game</button>
     </div>
@@ -129,15 +118,12 @@
         const guessInput = document.getElementById('guess-input');
         const correctItemsContainer = document.getElementById('correct-items');
         const numItemsInput = document.getElementById('num-items');
-        const showTimeInput = document.getElementById('show-time');
-        const guessTimeInput = document.getElementById('guess-time');
-        const wrongGuessesInput = document.getElementById('wrong-guesses');
-        const infiniteGuessesCheckbox = document.getElementById('infinite-guesses');
+        const limitGuessesCheckbox = document.getElementById('limit-guesses');
 
         let correctItems = [];
         let shownItems = [];
         let wrongGuesses = 0;
-        let maxWrongGuesses = 5;
+        let maxWrongGuesses = 0;
         let gameTimeout;
 
         function showToast(message, duration = 3000) {
@@ -155,18 +141,15 @@
             correctItemsContainer.innerHTML = '';
             gameArea.style.display = 'none';
             numItemsInput.value = 10;
-            showTimeInput.value = 30;
-            guessTimeInput.value = 60;
-            wrongGuessesInput.value = 5;
-            infiniteGuessesCheckbox.checked = false;
+            limitGuessesCheckbox.checked = false;
             clearTimeout(gameTimeout);
         }
 
         function startGame() {
             const numItems = parseInt(numItemsInput.value);
-            const showTime = parseInt(showTimeInput.value) * 1000;
-            const guessTime = parseInt(guessTimeInput.value) * 1000;
-            maxWrongGuesses = infiniteGuessesCheckbox.checked ? Infinity : parseInt(wrongGuessesInput.value);
+
+            // Calculate maximum wrong guesses based on the checkbox
+            maxWrongGuesses = limitGuessesCheckbox.checked ? Math.floor(numItems * 0.2) : Infinity;
 
             // Generate random items from the provided list
             shownItems = [];
@@ -178,19 +161,15 @@
             }
 
             // Show the items in a toast
-            showToast(`Memorize these items: ${shownItems.join(', ')}`, showTime);
+            showToast(`Memorize these items: ${shownItems.join(', ')}`, 60000); // Show items for 1 minute
 
-            // Hide the items after showTime and start the guessing phase
+            // Hide the items after 1 minute and start the guessing phase
             setTimeout(() => {
                 toast.style.display = 'none';
                 guessInput.value = '';
                 guessInput.focus();
                 gameArea.style.display = 'block';
-
-                gameTimeout = setTimeout(() => {
-                    endGame(false);  // Player runs out of time
-                }, guessTime);
-            }, showTime);
+            }, 60000);
         }
 
         function checkGuess() {
@@ -217,7 +196,6 @@
         }
 
         function endGame(win) {
-            clearTimeout(gameTimeout);
             showToast(win ? 'Congratulations, You Won!' : 'Game Over, You Lost!');
             gameArea.style.display = 'none';
         }
