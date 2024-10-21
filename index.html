@@ -59,6 +59,8 @@
             max-width: 600px;
             color: #e0e0e0;
             position: relative;
+            max-height: 80%;
+            overflow-y: auto; /* Enables scrolling */
         }
         #items-modal-content ul {
             list-style-type: none;
@@ -237,7 +239,6 @@
             itemsModal.style.display = 'none';
             gameArea.style.display = 'block';
             showToast("Start guessing!");
-
             guessInput.focus();
         }
 
@@ -264,7 +265,7 @@
             } else {
                 wrongGuesses++;
                 const remainingGuesses = maxWrongGuesses === Infinity ? 'infinite guesses left' : `${maxWrongGuesses - wrongGuesses} guesses left`;
-                showToast(`Wrong: ${guess}. ${remainingGuesses}`);
+                showToast(`Wrong: ${guess}. ${remainingGuesses}. ${shownItems.includes(guess) ? '' : `${guess} is not an item!`}`);
 
                 if (wrongGuesses >= maxWrongGuesses) {
                     showToast("Game over! You lost.");
