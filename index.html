@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memory Recall Game</title>
+    <style>
+        body {
+            background-color: #121212;
+            color: #e0e0e0;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+        h1 {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 10px;
+        }
+        select, input {
+            background-color: #1f1f1f;
+            color: #e0e0e0;
+            border: 1px solid #333;
+            padding: 5px;
+            margin-bottom: 15px;
+            width: 100%;
+        }
+        button {
+            background-color: #333;
+            color: #e0e0e0;
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+            width: 100%;
+        }
+        button:hover {
+            background-color: #555;
+        }
+        .toast {
+            background-color: #333;
+            color: #e0e0e0;
+            padding: 10px;
+            border-radius: 5px;
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: none;
+        }
+        #game-area {
+            display: none;
+            margin-top: 20px;
+        }
+        .correct-items {
+            margin-top: 20px;
+            display: flex;
+            flex-wrap: wrap;
+        }
+        .correct-items div {
+            background-color: #1f1f1f;
+            padding: 10px;
+            margin: 5px;
+            border-radius: 5px;
+            border: 1px solid #333;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Memory Recall Game</h1>
+
+    <div id="menu">
+        <label for="num-items">Number of items (10 to 100):</label>
+        <input type="number" id="num-items" min="10" max="100" value="10">
+
+        <label for="show-time">Time to show items (30s to 5min):</label>
+        <input type="number" id="show-time" min="30" max="300" value="30"> seconds
+
+        <label for="guess-time">Time to guess (1min to 30min):</label>
+        <input type="number" id="guess-time" min="60" max="1800" value="60"> seconds
+
+        <label for="wrong-guesses">Number of wrong guesses (5 to 30 or infinite):</label>
+        <input type="number" id="wrong-guesses" min="5" max="30" value="5">
+        <input type="checkbox" id="infinite-guesses"> No limit
+
+        <button id="start-btn">Start Game</button>
+    </div>
+
+    <div id="game-area">
+        <div id="toast" class="toast"></div>
+
+        <input type="text" id="guess-input" placeholder="Enter your guesses" autocomplete="off">
+        <button id="reset-btn">Reset Game</button>
+
+        <div class="correct-items" id="correct-items"></div>
+    </div>
+
+    <script>
+        const startBtn = document.getElementById('start-btn');
+        const resetBtn = document.getElementById('reset-btn');
+        const toast = document.getElementById('toast');
+        const gameArea = document.getElementById('game-area');
+        const guessInput = document.getElementById('guess-input');
+        const correctItemsContainer = document.getElementById('correct-items');
+        const numItemsInput = document.getElementById('num-items');
+        const showTimeInput = document.getElementById('show-time');
+        const guessTimeInput = document.getElementById('guess-time');
+        const wrongGuessesInput = document.getElementById('wrong-guesses');
+        const infiniteGuessesCheckbox = document.getElementById('infinite-guesses');
+
+        let correctItems = [];
+        let shownItems = [];
+        let wrongGuesses = 0;
+        let maxWrongGuesses = 5;
+        let gameTimeout;
+
+        function showToast(message) {
+            toast.innerText = message;
+            toast.style.display = 'block';
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 2000);
+        }
+
+        function resetGame() {
+            correctItems = [];
+            shownItems = [];
+            wrongGuesses = 0;
+            correctItemsContainer.innerHTML = '';
+            gameArea.style.display = 'none';
+            numItemsInput.value = 10;
+            showTimeInput.value = 30;
+            guessTimeInput.value = 60;
+            wrongGuessesInput.value = 5;
+            infiniteGuessesCheckbox.checked = false;
+            clearTimeout(gameTimeout);
+        }
+
+        function startGame() {
+            const numItems = parseInt(numItemsInput.value);
+            const showTime = parseInt(showTimeInput.value) * 1000;
+            const guessTime = parseInt(guessTimeInput.value) * 1000;
+            maxWrongGuesses = infiniteGuessesCheckbox.checked ? Infinity : parseInt(wrongGuessesInput.value);
+
+            // Generate random items
+            shownItems = Array.from({ length: numItems }, () => Math.random().toString(36).substring(2, 7).toLowerCase());
+
+            // Show the items as a toast
+            showToast(`Memorize these items: ${shownItems.join(', ')}`);
+
+            // Hide the items after showTime and start the guessing phase
+            setTimeout(() => {
+                toast.style.display = 'none';
+                guessInput.value = '';
+                guessInput.focus();
+                gameArea.style.display = 'block';
+
+                gameTimeout = setTimeout(() => {
+                    endGame(false);  // Player runs out of time
+                }, guessTime);
+            }, showTime);
+        }
+
+        function checkGuess() {
+            const guess = guessInput.value.toLowerCase();
+            guessInput.value = '';
+
+            if (shownItems.includes(guess)) {
+                if (!correctItems.includes(guess)) {
+                    correctItems.push(guess);
+                    const div = document.createElement('div');
+                    div.innerText = guess;
+                    correctItemsContainer.appendChild(div);
+
+                    if (correctItems.length === shownItems.length) {
+                        endGame(true);  // Player wins
+                    }
+                }
+            } else {
+                wrongGuesses++;
+                if (wrongGuesses >= maxWrongGuesses && maxWrongGuesses !== Infinity) {
+                    endGame(false);  // Player loses by wrong guesses
+                }
+            }
+        }
+
+        function endGame(win) {
+            clearTimeout(gameTimeout);
+            showToast(win ? 'Congratulations, You Won!' : 'Game Over, You Lost!');
+            gameArea.style.display = 'none';
+        }
+
+        startBtn.addEventListener('click', startGame);
+        resetBtn.addEventListener('click', resetGame);
+        guessInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                checkGuess();
+            }
+        });
+
+    </script>
+
+</body>
+</html>
